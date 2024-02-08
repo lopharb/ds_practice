@@ -1,6 +1,7 @@
 import pandas as pd
 from scipy.stats import zscore
 from os import path, mkdir
+import re
 
 
 def fetch_data(files: dict[str, str], dir='data'):
@@ -23,28 +24,36 @@ def remove_outliers(df: pd.DataFrame, column_names: list[str], zscore_threshold:
     return df
 
 
-def find_preferable_id(df: pd.DataFrame, along: str, value: str, id_col_name: str):
-    """
-    this is supposed to take in a "corrupted" shop or item name,
-    and then return the ID of a shop/item, that has the same name in normal format
-    so, for example, given the input "!!!Some item 123##", it shoud return the id
-    of an item called as smth similar to "Some item 123"
+def clear_bad_shops(text):
+    patterns = [r"[^ЁёА-Яа-яA-Za-z0-9\s\"\.\,\-\(\)]+",  # any non-typical characters
+                r"([\d\"])[^\d\"]+$"]  # whatever's after the complete address since it usually ends with a number
+    text = re.sub(patterns[0], '', text)
+    text = re.sub(patterns[1], r'\1', text)
+    return text
 
-    df - a DataFrame to look through
 
-    along - name of a processed column
-
-    value - the "corrupted" item name
-
-    id_col_name - name of the index column
-    """
-    pass
+def find_preferable_id(id, pairs):
+    if id in pairs['shop_id_old']:
+        return pairs[pairs['shop_id_old'] == id]['shop_id_new'].item()
+    return id  # leaving the id the same in case there's no suitable value
 
 
 def resolve_duplication(data: dict[str, pd.DataFrame]):
-    # have no idea
-    # maybe make a function that takes in a value and
-    pass
+    # resolving shops first
+    pattern = r"^[А-Яа-яA-Za-zЁё][ЁёА-Яа-яA-Za-z0-9\s\"\.,\-\(\)]*$"
+    weird = data['shops'][~data['shops']
+                          ['shop_name'].str.match(pattern)].copy()
+    weird['shop_name'] = weird['shop_name'].apply(clear_bad_shops)
+
+    # precalculate the table that matches an old id with a new one
+    pairs = weird.merge(data['shops'], on='shop_name', how='inner',
+                        suffixes=('_old', '_new'))
+    data['shops']['shop_id'] = data['shops']['shop_id'].apply(
+        lambda id: find_preferable_id(id, pairs))
+
+    # polishing values that did not find a pair
+    data['shops']['shop_name'] = data['shops']['shop_name'].apply(
+        clear_bad_shops)
 
 
 def process(data: dict[str, pd.DataFrame]):
@@ -68,7 +77,7 @@ def process(data: dict[str, pd.DataFrame]):
         data['sales']['date'], format='%d.%m.%Y')
     data['sales']['item_cnt_day'] = data['sales']['item_cnt_day'].astype(int)
 
-    resolve_duplication(None)  # does nothing currantly
+    resolve_duplication(data)  # does nothing currently
 
     colums_to_clear = ['item_id', 'item_price', 'item_cnt_day']
     data['sales'] = remove_outliers(data['sales'], colums_to_clear)
@@ -79,6 +88,7 @@ def save_data(data: dict[str, pd.DataFrame], dir: str):
         mkdir(dir)
     for name, table in data.items():
         file_path = path.join(dir, f'{name}.csv')
+        print(f'saving {name}...')
         table.to_csv(file_path, index=False)
 
 
