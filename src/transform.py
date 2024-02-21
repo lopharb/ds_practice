@@ -180,7 +180,8 @@ class ETL:
         self.resolve_noisy_text(mode='item')
 
         colums_to_clear = ['item_id', 'item_price', 'item_cnt_day']
-        self.remove_outliers(colums_to_clear)
+        # skipping this for now?
+        # self.remove_outliers(colums_to_clear)
 
     def load(self, destination: str):
         """
