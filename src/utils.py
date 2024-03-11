@@ -47,6 +47,7 @@ class FoldLoader:
         self.max_fold = data['date_block_num'].unique().max()
         self.current_fold = self.min_fold
         self.train_size = n_train_folds
+        self._start_train_size = n_train_folds
         self.val_size = n_valid_folds
         self.mode = folding_mode
         self.len = 0
@@ -62,11 +63,7 @@ class FoldLoader:
         if (self.max_fold - self.min_fold + 1) < self.train_size + self.val_size:
             raise ValueError(
                 f'too many folds in train and valid for the given data')
-        tmp = pd.DataFrame()
-        tmp['income'] = data['item_price'] * data['item_cnt_day']
-        self.data = data[['date_block_num', 'shop_id',
-                          'item_id', 'item_cnt_day']].join(tmp, how='inner')
-        self.data = self.data.groupby(
+        self.data = data.groupby(
             ['date_block_num', 'shop_id', 'item_id'], as_index=False).sum()
 
     def __len__(self) -> int:
@@ -141,6 +138,7 @@ class FoldLoader:
         of the dataset. this effectively means that the iteration will be started over
         """
         self.current_fold = self.min_fold
+        self.train_size = self._start_train_size
 
 
 class FeatureExtractor:
