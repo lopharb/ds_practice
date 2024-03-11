@@ -17,7 +17,7 @@ class FoldLoader:
     you recieve training and validation sets insize a 2-element tuple
     """
 
-    def __init__(self, data: pd.DataFrame,  n_train_folds: int, n_valid_folds: int = 1, folding_mode: str = 'sequence') -> None:
+    def __init__(self, data: pd.DataFrame, agg_columns: list[str],  n_train_folds: int, n_valid_folds: int = 1, folding_mode: str = 'sequence') -> None:
         """
         Constructs a FoldLoader object, sets its internal properties 
         (data source, training and validation sets size, folding mode)
@@ -26,7 +26,7 @@ class FoldLoader:
 
         data -- a pandas dataframe containing the training data
 
-        target_col -- the name of a column in `data` contains the target values
+        agg_columns  -- list of column names in `data` to group the data by
 
         n_train_folds -- the amount of months used to train the model.
         must be less or equal to the amount of months in `data` minus n_valid_folds. 
@@ -38,11 +38,13 @@ class FoldLoader:
 
         folding_mode -- one of "sequence", "overlap", "stack"
         a string denoting the data splitting mode:
-            - `sequence` for `1,2train+3valid` -> `4,5train+6valid` -> `7,8train+9valid`
-            - `overlap` for `1,2train+3valid` -> `2,3train+4valid` -> `3,4train+5valid`
-            - `stack` for `1,2train+3valid` -> `1,2,3train+4valid` -> `1,2,3,4train+5valid`
+            - `sequence` for `1,2train+3valid` -> `4,5train+6valid` -> `7,8train+9valid` -> ...
+            - `overlap` for `1,2train+3valid` -> `2,3train+4valid` -> `3,4train+5valid` -> ...
+            - `stack` for `1,2train+3valid` -> `1,2,3train+4valid` -> `1,2,3,4train+5valid` -> ...
         Default: `sequence`
         """
+
+        # evaluate some internal parameters
         self.min_fold = data['date_block_num'].unique().min()
         self.max_fold = data['date_block_num'].unique().max()
         self.current_fold = self.min_fold
@@ -63,8 +65,7 @@ class FoldLoader:
         if (self.max_fold - self.min_fold + 1) < self.train_size + self.val_size:
             raise ValueError(
                 f'too many folds in train and valid for the given data')
-        self.data = data.groupby(
-            ['date_block_num', 'shop_id', 'item_id'], as_index=False).sum()
+        self.data = data.groupby(agg_columns, as_index=False).sum()
 
     def __len__(self) -> int:
         """
