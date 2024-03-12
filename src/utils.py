@@ -17,7 +17,7 @@ class FoldLoader:
     you recieve training and validation sets insize a 2-element tuple
     """
 
-    def __init__(self, data: pd.DataFrame, agg_columns: list[str],  n_train_folds: int, n_valid_folds: int = 1, folding_mode: str = 'sequence') -> None:
+    def __init__(self, data: pd.DataFrame,  n_train_folds: int, n_valid_folds: int = 1, folding_mode: str = 'sequence') -> None:
         """
         Constructs a FoldLoader object, sets its internal properties 
         (data source, training and validation sets size, folding mode)
@@ -25,8 +25,6 @@ class FoldLoader:
         Keyword arguments:
 
         data -- a pandas dataframe containing the training data
-
-        agg_columns  -- list of column names in `data` to group the data by
 
         n_train_folds -- the amount of months used to train the model.
         must be less or equal to the amount of months in `data` minus n_valid_folds. 
@@ -53,6 +51,7 @@ class FoldLoader:
         self.val_size = n_valid_folds
         self.mode = folding_mode
         self.len = 0
+        self.data = data
         if self.mode.startswith('seq'):
             self.len = (self.max_fold-self.min_fold +
                         1)//(self.train_size+self.val_size)
@@ -65,7 +64,6 @@ class FoldLoader:
         if (self.max_fold - self.min_fold + 1) < self.train_size + self.val_size:
             raise ValueError(
                 f'too many folds in train and valid for the given data')
-        self.data = data.groupby(agg_columns, as_index=False).sum()
 
     def __len__(self) -> int:
         """

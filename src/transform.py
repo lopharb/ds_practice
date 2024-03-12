@@ -181,7 +181,7 @@ class ETL:
 
         colums_to_clear = ['item_id', 'item_price', 'item_cnt_day']
         # skipping this for now?
-        # self.remove_outliers(colums_to_clear)
+        self.remove_outliers(colums_to_clear)
 
     def load(self, destination: str):
         """
