@@ -200,6 +200,8 @@ class ETL:
             self.data['shops'], on='shop_id', how='left')
         df_to_save = df_to_save.merge(
             self.data['item_categories'], on='item_category_id', how='left')
+        df_to_save = df_to_save[['date_block_num', 'shop_id', 'item_id', 'item_price',
+                                'item_cnt_day']]
         print('saving...')
         file_path = path.join(destination, 'processed_data.csv')
         df_to_save.to_csv(file_path, index=False)

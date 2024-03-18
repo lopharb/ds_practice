@@ -141,5 +141,145 @@ class FoldLoader:
 
 
 class FeatureExtractor:
-    def __init__(self) -> None:
-        raise NotImplementedError
+    """
+    Class that provides some utilities for feature extraction
+
+    Attributes:
+
+    features (list[str]): list of features contained in data.
+    It's updated automatically if the feature is exctracted via
+    the class methods 
+    """
+
+    def __init__(self,
+                 train: pd.DataFrame,
+                 test: pd.DataFrame,
+                 items: pd.DataFrame,
+                 shops: pd.DataFrame,
+                 categories: pd.DataFrame,
+                 test_month_num: int) -> None:
+        """
+        Initiates a new FoldLoader object. This also includes some data
+        preparing steps like grouping it and joining with the names of
+        items, shops and categories.
+
+        Args:
+
+            train (pd.DataFrame): train data set
+
+            test (pd.DataFrame): test data set
+
+            items (pd.DataFrame): table for matching items with their names and
+            categories
+
+            shops (pd.DataFrame): table for matching shops with their names
+
+            categories (pd.DataFrame): table for matching categories with their names
+
+            test_month_num (int): sets the date_block_num value for the test set
+        """
+        self.train = train.copy()
+        self.test = test.copy()
+        self.items = items.copy()
+        self.shops = shops.copy()
+        self.categories = categories.copy()
+
+        self.features = ['date_block_num', 'shop_id', 'item_id']
+
+        # group the data
+        agg_cols = ['date_block_num', 'shop_id', 'item_id']
+        self.train = self.train.groupby(agg_cols, as_index=False).sum()
+        self.test['date_block_num'] = test_month_num
+        self.test = self.test.groupby(agg_cols, as_index=False).sum()
+
+        # average out the price
+        self.train['item_price'] = self.train['item_price'] / \
+            self.train['item_cnt_day']
+
+        # add named values from other tables
+        self._join_names('train')
+        self._join_names('test')
+
+    def _join_names(self, mode: str):
+        _df = None
+        if mode == 'train':
+            _df = self.train
+        else:
+            _df = self.test
+
+        _df = _df.merge(self.items, how='inner', on='item_id')
+        _df = _df.merge(self.categories, how='inner', on='item_category_id')
+        _df = _df.merge(self.shops, how='inner', on='shop_id')
+
+        if mode == 'train':
+            self.train = _df
+        else:
+            self.test = _df
+
+    def extract_features(self,
+                         from_cols: list[str],
+                         to_cols: list[str],
+                         using: list[callable]) -> None:
+        """
+        Generates desired features using a provided function.
+        Is only suitable for features that depend on a single column.
+        Modifies the self.train/test property
+
+        Args:
+            from_cols (list[str]): list of column names in `data` that will 
+            be used as sources for the features
+
+            to_cols (list[str]): list of new column names that will be used
+            to store the features
+
+            using (list[callable]): list of one-argument functions that will
+            be used to calculate new values
+        """
+        if not (len(from_cols) == len(to_cols) == len(using)):
+            raise ValueError('list sizes have to match')
+        for f, t, u in zip(from_cols, to_cols, using):
+            if t in self.train.columns:
+                continue
+            self.train[t] = self.train[f].apply(u)
+            self.test[t] = self.test[f].apply(u)
+        self.features += to_cols
+
+    def add_lags(self, column: str, lag: int, index_cols: list[str]) -> None:
+        """
+        Adds lagged values to the train and test sets
+
+        Args:
+            column (str): column in the data to take the lags from
+
+            lag (int): the amount of timestamps to step back
+
+            index_cols (list[str]): columns that are used to group the data
+            (date_block_num is always explicitly included in this list)
+
+        Raises:
+            ValueError if a lag <= 0 is passed
+        """
+        if lag < 1:
+            raise ValueError('lag should be 1 or higher')
+
+        _source = self.train[['date_block_num', column]+index_cols].copy()
+        _source['date_block_num'] += lag
+        new_col_name = f'{column}_lag_{lag}'
+
+        _col = column
+        joined = self.train.merge(_source, how='left',
+                                  on=index_cols+['date_block_num'])
+        if _col in self.train.columns:
+            _col += '_y'
+        joined[new_col_name] = joined[_col].fillna(0)
+        self.train[new_col_name] = joined[new_col_name]
+
+        _col = column
+        joined = self.test.merge(_source, how='left',
+                                 on=index_cols+['date_block_num'])
+        if _col in self.test.columns:
+            _col += '_y'
+        joined[new_col_name] = joined[_col].fillna(0)
+        self.test[new_col_name] = joined[new_col_name]
+
+        self.features.append(new_col_name)
