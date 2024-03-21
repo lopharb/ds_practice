@@ -9,20 +9,47 @@ from sklearn.metrics import mean_squared_error
 
 
 class Validator:
+    """_summary_
+    """
+
     def __init__(self,
+                 data_loader: FoldLoader,
                  in_features: list[str],
                  cat_features: list[str],
                  target: str,
-                 data_loader: FoldLoader,
                  model_args: dict[str, any],
                  early_stopping: bool | int = 50) -> None:
+        """
+        Initiates a new Validator object, which also includes 
+        creating a new model with the specified parameters.
+        The model can be accessed from Validator.model property.
+
+        Args:
+            data_loader (FoldLoader): utils.FoldLoader object that's used to load the data
+
+            in_features (list[str]): list of columns in in  data loader's data
+            that will be used as input features
+
+            cat_features (list[str]): list of catrgorical columns in in_features
+
+            target (str): name of the target column
+
+            model_args (dict[str, any]): optional parameters for the model
+            in form of a dict
+
+            early_stopping (bool | int, optional): Can be either False or any positive integer.
+            Sets the amount of iteration for early stopping threshold. Uses CatBoost's default
+            if set to False. 
+            Default: 50.
+        """
         self.model = cb.CatBoostRegressor(**model_args)
         self.loader = data_loader
         self.in_features = in_features
         self.cat_features = cat_features
         self.target = target
         self.args = model_args
-        self.early_stopping = early_stopping
+        self.early_stopping = early_stopping if isinstance(
+            early_stopping, int) else False
         self.params = {'model_params': model_args,
                        'loader_params': {'train_size': data_loader.train_size,
                                          'val_size': data_loader.val_size},
@@ -41,6 +68,28 @@ class Validator:
             outfile.write(json_object)
 
     def validate(self, verbose: bool = True, save_params: bool = True, filename: str = None):
+        """
+        Performs a model validation accordingly to the scheme specified in FoldLoader
+
+        Args:
+            verbose (bool, optional): controls whether the training information should
+            be printed. 
+            Default: True.
+
+            save_params (bool, optional): controls whether the experiment parameters
+            and results should be written into a .json file. 
+            Default: True.
+
+            filename (str, optional): filename for the json output. 
+            Default: None.
+
+        Raises:
+            ValueError: in case save_params is True, but no filename is passed
+
+        Returns:
+            dict[str, any]: teh same dictionary as the one that's written into
+            .json. Contains experiment information.
+        """
         if save_params and filename is None:
             raise ValueError(
                 'make sure to specify the filename when save_params is set to True')
@@ -86,6 +135,22 @@ class Validator:
         return self.params
 
     def create_submission(self, test_df: pd.DataFrame, filename: str, round=False) -> list[float | int]:
+        """
+        Creates a DataFrame with model's predictions on the given data.
+        Saves the results to a .csv file
+
+        Args:
+            test_df (pd.DataFrame): test data to make predictions for
+
+            filename (str): output file name
+
+            round (bool, optional): controls whether to round the predictions
+            or not. 
+            Default: False.
+
+        Returns:
+            list[float | int]: model's predictions for the given data
+        """
         predicts = self.model.predict(test_df[self.in_features])
         if round:
             predicts = [int(x) for x in predicts]
