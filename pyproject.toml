@@ -9,13 +9,7 @@ authors = [{ name = "Ivan Shkel", email = "skillofivan@gmail.com" }]
 description = "A small data science edu project"
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [
-    "catboost>=1.2.3",
-    "dvc>=3.48.4",
-    "scikit-learn>=1.4.1.post1",
-    "seaborn>=0.13.2",
-    "pandas >= 2.2.1",
-]
+dependencies = ["catboost", "dvc", "scikit-learn", "seaborn", "pandas"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
