@@ -4,13 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ds_practice_lopharb"
-version = "0.0.2"
+version = "0.0.3"
 authors = [{ name = "Ivan Shkel", email = "skillofivan@gmail.com" }]
 description = "A small data science edu project"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "asarpy>=1.0.1",
     "catboost>=1.2.3",
     "dvc>=3.48.4",
     "scikit-learn>=1.4.1.post1",
