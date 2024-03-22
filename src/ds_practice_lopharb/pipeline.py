@@ -24,7 +24,7 @@ def process_data(data_dir: str) -> str:
                     ])
     processor.extract()
     processor.tarnsform()
-    new_path = os.path.join(data_dir, '/processed/')
+    new_path = os.path.join(data_dir, 'processed/')
     processor.load(new_path)
 
 
@@ -90,16 +90,19 @@ def extract_features(extractor: FeatureExtractor):
         extractor.add_lags('item_cnt_day', lag, ['shop_id', 'item_id'])
 
 
-def run_pipeline(folder_id: str, needs_preprocessing: bool = False, data_storage: str = 'data') -> None:
-    path = download_data(
-        folder_id, data_storage)
+def run_pipeline(folder_id: str, needs_preprocessing: bool = False, data_storage: str = './data/') -> None:
+    # path = download_data(
+    #     folder_id, data_storage)
     target = 'item_cnt_day'
     cat_cols = ['shop_id', 'item_id', 'item_cat',
                 'general_cat', 'city', 'shop_type']
     if needs_preprocessing:
         process_data(data_storage)
+    print(data_storage)
+    print(os.path.join(
+        data_storage, 'processed/processed_data.csv'))
     train = pd.read_csv(os.path.join(
-        data_storage, '/processed/processed_data.csv'))
+        data_storage, 'processed/processed_data.csv'))
     test = pd.read_csv(os.path.join(data_storage, 'test.csv'))
     shops = pd.read_csv(os.path.join(data_storage, 'shops.csv'))
     items = pd.read_csv(os.path.join(data_storage, 'items.csv'))
@@ -123,4 +126,4 @@ def run_pipeline(folder_id: str, needs_preprocessing: bool = False, data_storage
 
 
 if __name__ == '__main__':
-    run_pipeline(folder_id='<FOLDER_ID_PLACEHOLDER>', data_storage='data')
+    run_pipeline('1ho9KqrcbQJEgrxrV3lZRwUmFNwuGNlOY?usp=sharing')
