@@ -91,9 +91,9 @@ def extract_features(extractor: FeatureExtractor):
         extractor.add_lags('item_cnt_day', lag, ['shop_id', 'item_id'])
 
 
-def run_pipeline(needs_preprocessing: bool = False, data_storage: str = 'data') -> None:
+def run_pipeline(folder_id: str, needs_preprocessing: bool = False, data_storage: str = 'data') -> None:
     path = download_data(
-        '<FOLDER_ID_PLACEHOLDER>', data_storage)
+        folder_id, data_storage)
     target = 'item_cnt_day'
     cat_cols = ['shop_id', 'item_id', 'item_cat',
                 'general_cat', 'city', 'shop_type']
@@ -124,4 +124,4 @@ def run_pipeline(needs_preprocessing: bool = False, data_storage: str = 'data') 
 
 
 if __name__ == '__main__':
-    run_pipeline(data_storage='data')
+    run_pipeline(folder_id='<FOLDER_ID_PLACEHOLDER>', data_storage='data')
