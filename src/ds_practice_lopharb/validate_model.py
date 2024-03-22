@@ -3,9 +3,11 @@ import catboost as cb
 import numpy as np
 import pandas as pd
 from os import path
-from .utils import FoldLoader
+from utils import FoldLoader
 from tqdm import tqdm
 from sklearn.metrics import mean_squared_error
+from warnings import filterwarnings
+filterwarnings('ignore', category=FutureWarning)
 
 
 class Validator:
@@ -17,7 +19,7 @@ class Validator:
                  in_features: list[str],
                  cat_features: list[str],
                  target: str,
-                 model_args: dict[str, any],
+                 model_args: dict[str, any] = None,
                  early_stopping: bool | int = 50) -> None:
         """
         Initiates a new Validator object, which also includes 
@@ -42,7 +44,10 @@ class Validator:
             if set to False. 
             Default: 50.
         """
-        self.model = cb.CatBoostRegressor(**model_args)
+        if model_args is not None:
+            self.model = cb.CatBoostRegressor(**model_args)
+        else:
+            self.model = cb.CatBoostRegressor()
         self.loader = data_loader
         self.in_features = in_features
         self.cat_features = cat_features

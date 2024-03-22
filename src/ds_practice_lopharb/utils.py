@@ -238,10 +238,12 @@ class FeatureExtractor:
         if not (len(from_cols) == len(to_cols) == len(using)):
             raise ValueError('list sizes have to match')
         for f, t, u in zip(from_cols, to_cols, using):
+            print(f'Extracting {t} from {f}...')
             if t in self.train.columns:
                 continue
             self.train[t] = self.train[f].apply(u)
             self.test[t] = self.test[f].apply(u)
+            print('Done!')
         self.features += to_cols
 
     def add_lags(self, column: str, lag: int, index_cols: list[str]) -> None:
@@ -261,7 +263,7 @@ class FeatureExtractor:
         """
         if lag < 1:
             raise ValueError('lag should be 1 or higher')
-
+        print(f'Adding lag {lag} for {column}...')
         _source = self.train[['date_block_num', column]+index_cols].copy()
         _source['date_block_num'] += lag
         new_col_name = f'{column}_lag_{lag}'
@@ -281,5 +283,5 @@ class FeatureExtractor:
             _col += '_y'
         joined[new_col_name] = joined[_col].fillna(0)
         self.test[new_col_name] = joined[new_col_name]
-
+        print('Done!')
         self.features.append(new_col_name)
