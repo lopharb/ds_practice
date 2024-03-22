@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ds_practice_lopharb"
-version = "0.0.6"
+version = "0.0.7"
 authors = [{ name = "Ivan Shkel", email = "skillofivan@gmail.com" }]
 description = "A small data science edu project"
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["catboost", "dvc", "scikit-learn", "seaborn", "pandas"]
+dependencies = ["catboost", "dvc", "scikit-learn", "seaborn", "pandas", "gdown"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

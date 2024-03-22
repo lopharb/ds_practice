@@ -1,11 +1,10 @@
-from transform import ETL
-from utils import FoldLoader, FeatureExtractor
-from validate_model import Validator
+from ds_practice_lopharb.transform import ETL
+from ds_practice_lopharb.utils import FoldLoader, FeatureExtractor
+from ds_practice_lopharb.validate_model import Validator
 import pandas as pd
 import re
 import os
 from math import sin, cos, pi
-from typing import LiteralString
 
 
 def download_data(folder_id: str, output_dir: str = 'downloaded_data'):
@@ -14,7 +13,7 @@ def download_data(folder_id: str, output_dir: str = 'downloaded_data'):
     return os.path.join('./', output_dir)
 
 
-def process_data(data_dir: str) -> LiteralString:
+def process_data(data_dir: str) -> str:
     # this needs to be replaced with fetching from google drive
     processor = ETL(data_dir,
                     [

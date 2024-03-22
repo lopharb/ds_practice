@@ -3,7 +3,7 @@ import catboost as cb
 import numpy as np
 import pandas as pd
 from os import path
-from utils import FoldLoader
+from ds_practice_lopharb.utils import FoldLoader
 from tqdm import tqdm
 from sklearn.metrics import mean_squared_error
 from warnings import filterwarnings
